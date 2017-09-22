@@ -14,7 +14,7 @@ class Controller(object):
         kp = -0.2
         ki = -0.05
         kd = -3.0
-        self.spidcontroller = PID(kp, ki, kd, 0., 1.)
+        self.spidcontroller = PID(kp, ki, kd, -1., 1.)
 
         kp = -0.2
         ki = -0.05
