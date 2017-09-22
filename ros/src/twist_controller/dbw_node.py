@@ -122,7 +122,8 @@ class DBWNode(object):
         self.waypoints = waypoints
 
     def loop(self):
-        rate = rospy.Rate(10) # 50Hz
+        dt = 0.1
+        rate = rospy.Rate(1/dt) # 10Hz or 50Hz
         while not rospy.is_shutdown():
 
             if ((self.my_twist_command is not None) and
@@ -138,7 +139,6 @@ class DBWNode(object):
 
                 # cross-track error
                 cte = self.calc_cte()
-                dt = 0.02 #rospy rate
 
                 throttle, brake, steering = self.controller.control( cte, dt, set_linear_velocity, set_angular_velocity, set_curr_velocity)
 
