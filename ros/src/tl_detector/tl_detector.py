@@ -18,7 +18,7 @@ import pdb
 from math import sin,cos
 
 # Set to true to save images from camera to png files
-# Used to zoom test mapping of 3D world coordinates to 
+# Used to zoom test mapping of 3D world coordinates to
 # image plane.
 # If true, requires keyboard input at each function call
 image_capture_mode = False
@@ -35,7 +35,7 @@ class TLDetector(object):
         self.line_pos_wp = []
 
 
-        
+
         self.pose = None
         self.waypoints = None
         self.camera_image = None
@@ -132,7 +132,7 @@ class TLDetector(object):
         else:
             # If last index is supplied, only search for waypoints
             # around that region
-            if last_ind: 
+            if last_ind:
                 start_ind = max(last_ind - 200,0)
                 end_ind = min(last_ind + 200,len(self.waypoints.waypoints))
                 search_wp = self.waypoints.waypoints[start_ind:end_ind]
@@ -140,7 +140,7 @@ class TLDetector(object):
             else:
                 start_ind = 0
                 search_wp = self.waypoints.waypoints
-            
+
             # Search the waypoints for the closest distance to pose
             closest_dist = 10**6
             closest_ind = 0
@@ -165,7 +165,7 @@ class TLDetector(object):
 
         """
 
-        # Focal length in config of unknown units. Normally given in 
+        # Focal length in config of unknown units. Normally given in
         # thousands of pixels but the number is order 1
         # temporarily, just assign it some reasonable number
         fx = self.config['camera_info']['focal_length_x']
@@ -270,7 +270,7 @@ class TLDetector(object):
             else:
                 raw_input(shutter_msg)
             '''
-            
+
             # Write text
             y0 = 50
             dy = 20
@@ -280,10 +280,10 @@ class TLDetector(object):
                     ,cv2.FONT_HERSHEY_PLAIN,1,255)
 
             # Draw position of light
-        
+
             cv2.line(cv_image,(u-100,v),(u+100,v),(0,0,255),5)
             cv2.line(cv_image,(u,v-100),(u,v+100),(0,0,255),5)
-            
+
             # Specify filename and write image to it
             img_path = '%s/%s.png'%(img_dir,datetime.datetime.now())
             cv2.imwrite(img_path,cv_image)
@@ -308,6 +308,7 @@ class TLDetector(object):
             car_wp = self.get_closest_waypoint(self.pose.pose,self.last_car_wp)
             self.last_car_wp = car_wp
         else:
+            car_wp = False
             print('self.pose is emtpy')
         if not car_wp:
             print('car waypoint could not be found')
@@ -329,7 +330,7 @@ class TLDetector(object):
                 # Get closest waypoint to this line
                 this_line_wp = self.get_closest_waypoint(this_line.pose)
                 self.line_pos_wp.append(this_line_wp)
-    
+
                 # Make deep copy bc to add to list
                 # Otherwise this_line would be altered inside list
                 self.line_list.append(copy.deepcopy(this_line))

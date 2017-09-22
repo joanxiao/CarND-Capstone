@@ -144,6 +144,7 @@ class DBWNode(object):
 
                 if (self.my_dbwEnabled==True) or (self.my_dbwEnabled.data==True):
                     #print 'cte', cte, 'throttle', throttle, 'brake', brake, 'steer', steering, 'currspeed', set_curr_velocity, 'setspeed', set_linear_velocity
+                    print 'throttle', throttle, 'brake', brake, 'setspeed', set_linear_velocity
                     self.publish(throttle, brake, steering)
 
             rate.sleep()

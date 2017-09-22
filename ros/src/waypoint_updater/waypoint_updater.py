@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+from std_msgs.msg import Int32
 
 import math
 
@@ -23,7 +24,6 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
 
-
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
@@ -32,6 +32,7 @@ class WaypointUpdater(object):
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
+        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
 
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
@@ -39,7 +40,9 @@ class WaypointUpdater(object):
         # TODO: Add other member variables you need below
         self.pose = None
         self.waypoints = None
-        self.setspeed = (30.0)*(1.60934*1000/3600); # Mph to m/s
+        self.setspeed = (10.0)*(1.60934*1000/3600); # Mph to m/s
+        self.trafficlight_status  = -1
+        self.stop_distance = 3*self.setspeed*self.setspeed # roughly - TBD
 
         rospy.spin()
 
@@ -56,8 +59,13 @@ class WaypointUpdater(object):
             # assume track does not loop back to start
             startindex = min(closestWPi+1,num_wp)
             endindex = min(closestWPi+LOOKAHEAD_WPS,num_wp)
+            #print 'distance',self.distance(self.waypoints.waypoints,startindex,self.trafficlight_status)
             for wpi in range(startindex,endindex):
-                self.waypoints.waypoints[wpi].twist.twist.linear.x = self.setspeed
+                #if (((self.trafficlight_status-wpi)<STOP_NUM_WP)and((self.trafficlight_status-wpi)>=0)):
+                if ((wpi<=self.trafficlight_status)and(self.distance(self.waypoints.waypoints,wpi,self.trafficlight_status)<self.stop_distance)):
+                    self.waypoints.waypoints[wpi].twist.twist.linear.x = 0.0
+                else:
+                    self.waypoints.waypoints[wpi].twist.twist.linear.x = self.setspeed
                 wp2pub.append(self.waypoints.waypoints[wpi])
 
             lane = Lane()
@@ -72,7 +80,7 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        pass
+        self.trafficlight_status = msg.data
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
