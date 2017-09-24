@@ -14,6 +14,30 @@ from scipy.interpolate import CubicSpline
 
 from twist_controller import Controller
 
+def dashboard(throttle,brake,set_speed):
+    '''ASCII art to visualize vehicle metrics'''
+
+    print('') #spacer
+
+    num_marks = 30
+
+    # Throttle
+    t_marks = int(throttle*num_marks)
+    print('throttle: ' + '[' + 'o'*t_marks + ' '*(num_marks-t_marks) + ']'
+        +' %.2f'%throttle)
+
+    # Brake
+    max_brake = 1.0 #figure out correct max value
+    b_marks = int(brake/max_brake*num_marks) #change normalizer to some max value
+    print('brake:    ' + '[' + 'x'*b_marks + ' '*(num_marks-b_marks) + ']'
+        +' %.1f N*m'%brake)
+
+    # Speed
+    max_speed = 30.0
+    s_marks = int(set_speed/max_speed*num_marks) # using 32 m/s as max speed
+    print('speed:    ' + '[' + '|'*s_marks + ' '*(num_marks-s_marks) + ']'
+        +' %0.2f m/s'%set_speed)
+
 '''
 You can build this node only after you have built (or partially built) the `waypoint_updater` node.
 
@@ -144,7 +168,8 @@ class DBWNode(object):
 
                 if (self.my_dbwEnabled==True) or (self.my_dbwEnabled.data==True):
                     #print 'cte', cte, 'throttle', throttle, 'brake', brake, 'steer', steering, 'currspeed', set_curr_velocity, 'setspeed', set_linear_velocity
-                    print 'throttle', throttle, 'brake', brake, 'setspeed', set_linear_velocity
+                    #print 'throttle', throttle, 'brake', brake, 'setspeed', set_linear_velocity
+                    dashboard(throttle,brake,set_linear_velocity)
                     self.publish(throttle, brake, steering)
 
             rate.sleep()
