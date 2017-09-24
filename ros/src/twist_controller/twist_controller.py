@@ -2,6 +2,7 @@
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
 PI = 3.14159265359
+MAX_BRAKE_Nm = 100.0
 
 from yaw_controller import YawController
 from pid import PID
@@ -14,7 +15,7 @@ class Controller(object):
         kp = -10.0
         ki = -0.05
         kd = -3.0
-        self.spidcontroller = PID(kp, ki, kd, -1., 1.)
+        self.spidcontroller = PID(kp, ki, kd, -MAX_BRAKE_Nm, 1.)
 
         kp = -0.2
         ki = -0.05
