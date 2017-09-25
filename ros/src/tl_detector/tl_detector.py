@@ -22,6 +22,7 @@ from math import sin,cos
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 # Set to true to save images from camera to png files
 # Used to zoom test mapping of 3D world coordinates to 
@@ -301,7 +302,7 @@ class TLDetector(object):
             img_path = '%s/%s.png'%(img_dir,datetime.datetime.now())
             cv2.imwrite(img_path,cv_image)
             print('image written to:',img_path)
-
+        print("At time: {} sec, cv_image received and begin to classify the light color".format(str(time.clock())))
         #Get classification
         return self.light_classifier.get_classification(cv_image)
 
@@ -361,7 +362,7 @@ class TLDetector(object):
             state = self.get_light_state(self.lights[line_wp_ind])
             print('')
             print('Msg from tl_detector.py')
-            print('light detected')
+            print('At time: {} sec, light detected'.format(str(time.clock())))
             print('car waypoint: ',car_wp)
             print('line_waypoint: ',line_wp, state)
             return line_wp, state

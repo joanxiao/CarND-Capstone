@@ -3,6 +3,7 @@ import cv2
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import time 
 
 class TLClassifier(object):
     def __init__(self):
@@ -35,7 +36,7 @@ class TLClassifier(object):
         g=res
         #brightest spot
         a = np.array(g)
-        print(a.max(), np.unravel_index(a.argmax(), a.shape))
+        #print(a.max(), np.unravel_index(a.argmax(), a.shape))
         brighty = np.unravel_index(a.argmax(), a.shape)[0]
         brightx = np.unravel_index(a.argmax(), a.shape)[1]
         #print("Brightest spot, brightx: {}, birghty: {}".format(brightx, brighty)) 
@@ -49,23 +50,23 @@ class TLClassifier(object):
         if (((brightx == 0) and (brighty == 0)) == False):
             if (greenColor == True):
 		print("*******************Green Traffic Light**************")
-                cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
-                cv2.putText(img, "green traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
+                #cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
+                #cv2.putText(img, "green traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
                 colorID = TrafficLight.GREEN
-                print("colorID: TrafficLight.GREEN or color ID index: {}".format(TrafficLight.GREEN))
+                print("At time: {} sec, colorID: TrafficLight.GREEN or color ID index: {}".format(str(time.clock()), TrafficLight.GREEN))
             elif (redColor == True):
 		print("*******************Red Traffic Light**************")
-                cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
-                cv2.putText(img, "red traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
+                #cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
+                #cv2.putText(img, "red traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
                 colorID = TrafficLight.RED
-                print("colorID: TrafficLight.RED or color ID index: {}".format(TrafficLight.RED))
+                print("At time: {} sec, colorID: TrafficLight.RED or color ID index: {}".format(str(time.clock()), TrafficLight.RED))
             elif (yellowColor == True):
 		print("*******************Yellow Traffic Light**************")
-                cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
-                cv2.putText(img, "yellow traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
+                #cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
+                #cv2.putText(img, "yellow traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
               
                 colorID = TrafficLight.YELLOW
-                print("colorID: TrafficLight.YELLOW or color ID index: {}".format(TrafficLight.YELLOW))
+                print("At time: {} sec, colorID: TrafficLight.YELLOW or color ID index: {}".format(str(time.clock()), TrafficLight.YELLOW))
         return colorID
 
     #######################################################
@@ -99,7 +100,7 @@ class TLClassifier(object):
 
         ###################green color detection##########
         img = cv_image
-        imgOrig = img
+        #imgOrig = img
 
         # median blur the image
         img = cv2.medianBlur(img, 5)
@@ -145,4 +146,4 @@ class TLClassifier(object):
         
         ########################################################
 
-        return clr_ID #TrafficLight.UNKNOWN
+        return clr_ID
