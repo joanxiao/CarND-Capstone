@@ -302,7 +302,7 @@ class TLDetector(object):
             img_path = '%s/%s.png'%(img_dir,datetime.datetime.now())
             cv2.imwrite(img_path,cv_image)
             print('image written to:',img_path)
-        print("At time: {} sec, cv_image received and begin to classify the light color".format(str(time.clock())))
+        #print("At time: {} sec, cv_image received and begin to classify the light color".format(str(time.clock())))
         #Get classification
         return self.light_classifier.get_classification(cv_image)
 
@@ -360,11 +360,11 @@ class TLDetector(object):
 
         if line:
             state = self.get_light_state(self.lights[line_wp_ind])
-            print('')
-            print('Msg from tl_detector.py')
-            print('At time: {} sec, light detected'.format(str(time.clock())))
-            print('car waypoint: ',car_wp)
-            print('line_waypoint: ',line_wp, state)
+            #print('')
+            #print('Msg from tl_detector.py')
+            #print('At time: {} sec, light detected'.format(str(time.clock())))
+            #print('car waypoint: ',car_wp)
+            #print('line_waypoint: ',line_wp, state)
             return line_wp, state
         else:
             return -1, TrafficLight.UNKNOWN
