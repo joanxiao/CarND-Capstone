@@ -157,19 +157,19 @@ class WaypointUpdater(object):
                         # speed_for_WP = (distance2line/self.stop_distance)*self.my_current_velocity
                         if distance2line > 0.4*self.stop_distance: # stage 1
                             speed_for_WP = 0.8*self.setspeed #self.my_current_velocity
-                            print closestWPi,self.nextstop,'brake 1',wpi,distance2line,speed_for_WP
+                            # print closestWPi,self.nextstop,'brake 1',wpi,distance2line,speed_for_WP
                         elif distance2line > 0.3*self.stop_distance: # stage 2
                             speed_for_WP = 0.6*self.setspeed #self.my_current_velocity
-                            print closestWPi,self.nextstop,'brake 2a',wpi,distance2line,'\t\t',speed_for_WP
+                            # print closestWPi,self.nextstop,'brake 2a',wpi,distance2line,'\t\t',speed_for_WP
                         elif distance2line > 0.2*self.stop_distance: # stage 2
                             speed_for_WP = 0.4*self.setspeed #self.my_current_velocity
-                            print closestWPi,self.nextstop,'brake 2b',wpi,distance2line,'\t\t',speed_for_WP
+                            # print closestWPi,self.nextstop,'brake 2b',wpi,distance2line,'\t\t',speed_for_WP
                         elif distance2line > 0.15*self.stop_distance: # stage 2
                             speed_for_WP = 0.2*self.setspeed #self.my_current_velocity
-                            print closestWPi,self.nextstop,'brake 2c',wpi,distance2line,'\t\t',speed_for_WP
+                            # print closestWPi,self.nextstop,'brake 2c',wpi,distance2line,'\t\t',speed_for_WP
                         else: # linear slope to 0
                             speed_for_WP = (distance2line/(0.15*self.stop_distance))*0.2*self.setspeed #self.my_current_velocity
-                            print closestWPi,self.nextstop,'brake 3',wpi,distance2line,'\t\t\t\t',speed_for_WP
+                            # print closestWPi,self.nextstop,'brake 3',wpi,distance2line,'\t\t\t\t',speed_for_WP
 
 
                         if speed_for_WP > self.setspeed: # in case car failed to stop before light, and treat next light as the target
@@ -185,6 +185,7 @@ class WaypointUpdater(object):
             lane.header.stamp = rospy.Time(0)
             lane.waypoints = wp2pub
 
+            print 'WP_updater:',closestWPi
             self.final_waypoints_pub.publish(lane)
 
     def waypoints_cb(self, waypoints):

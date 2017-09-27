@@ -130,6 +130,9 @@ class DBWNode(object):
     def pose_cb(self, msg):
         self.pose = msg
         self.yaw = self.yaw_from_quaterion()
+        if self.waypoints is not None:
+            currWPi = self.get_closest_waypoint()
+            print 'dbw_node :       ',currWPi, self.pose.pose.position.x, self.pose.pose.position.y
 
     def yaw_from_quaterion(self):
         quaternion = (
@@ -170,7 +173,7 @@ class DBWNode(object):
                 if (self.my_dbwEnabled==True) or (self.my_dbwEnabled.data==True):
                     # print 'cte', cte, 'throttle', throttle, 'brake', brake, 'steer', steering, 'currspeed', set_curr_velocity, 'setspeed', set_linear_velocity
                     currWPi = self.get_closest_waypoint()
-                    print currWPi, 'throttle', throttle, 'brake', brake, 'speed', set_curr_velocity, '/', set_linear_velocity
+                    # print currWPi, 'throttle', throttle, 'brake', brake, 'speed', set_curr_velocity, '/', set_linear_velocity
                     dashboard(throttle,brake,set_linear_velocity)
                     self.publish(throttle, brake, steering)
 
