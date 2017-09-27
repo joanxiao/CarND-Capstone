@@ -349,11 +349,11 @@ class TLDetector(object):
 
         if line:
             state = self.get_light_state(self.lights[line_wp_ind])
-            print('')
-            print('Msg from tl_detector.py')
-            print('light detected')
-            print('car waypoint: ',car_wp)
-            print('line_waypoint: ',line_wp, state)
+            # print('')
+            # print('Msg from tl_detector.py')
+            # print('light detected')
+            # print('car waypoint: ',car_wp)
+            # print('line_waypoint: ',line_wp, state)
             return line_wp, state
         else:
             return -1, TrafficLight.UNKNOWN
