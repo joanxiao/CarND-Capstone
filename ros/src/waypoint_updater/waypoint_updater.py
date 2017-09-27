@@ -59,7 +59,10 @@ class WaypointUpdater(object):
         self.startwaypoint = -1
         self.state = 'move'
 
-        rospy.spin()
+        # start loop
+        self.loop()
+
+        # rospy.spin()
 
     def currvelocity_cb(self,velocity):
         self.my_current_velocity = velocity.twist.linear.x
@@ -67,126 +70,133 @@ class WaypointUpdater(object):
     def pose_cb(self, msg):
         self.pose = msg
 
-        if (self.waypoints is not None): # in case update comes before /base_waypoints
+    def loop(self):
+        dt = 0.1
+        rate = rospy.Rate(1/dt) # 10Hz or 50Hz
+        while not rospy.is_shutdown():
 
-            # Get waypoints of all traffic light lines if not already done
-            if self.line_pos_wp == []:
-                stop_line_positions = self.config['stop_line_positions']
-                for line_pos in stop_line_positions:
-                    # Search the waypoints for the closest distance to this line
-                    closest_dist = 10**6
-                    closest_ind = 0
-                    for i,waypoint in enumerate(self.waypoints.waypoints):
-                        way = waypoint.pose.pose.position
-                        dist = ((line_pos[0] - way.x)**2 + (line_pos[1] - way.y)**2)**0.50
-                        if dist < closest_dist:
-                            closest_ind = i
-                            closest_dist = dist
+            if (self.pose is not None) and (self.waypoints is not None): # in case update comes before /base_waypoints
 
-                    self.line_pos_wp.append(closest_ind)
+                # Get waypoints of all traffic light lines if not already done
+                if self.line_pos_wp == []:
+                    stop_line_positions = self.config['stop_line_positions']
+                    for line_pos in stop_line_positions:
+                        # Search the waypoints for the closest distance to this line
+                        closest_dist = 10**6
+                        closest_ind = 0
+                        for i,waypoint in enumerate(self.waypoints.waypoints):
+                            way = waypoint.pose.pose.position
+                            dist = ((line_pos[0] - way.x)**2 + (line_pos[1] - way.y)**2)**0.50
+                            if dist < closest_dist:
+                                closest_ind = i
+                                closest_dist = dist
 
-            num_wp = len(self.waypoints.waypoints)
-            closestWPi = self.get_closest_waypoint()
+                        self.line_pos_wp.append(closest_ind)
 
-            if self.startwaypoint <0:
-                self.startwaypoint = closestWPi
+                num_wp = len(self.waypoints.waypoints)
+                closestWPi = self.get_closest_waypoint()
 
-            # clear initial state after some distance - starting sim with speed 0
-            if self.distance(self.waypoints.waypoints,self.startwaypoint,closestWPi)>0.05:
-                self.initialstate = False
+                if self.startwaypoint <0:
+                    self.startwaypoint = closestWPi
 
-            # next traffic light stop line
-            if (self.line_pos_wp is not None):
-                pos_in_list = bisect(self.line_pos_wp,closestWPi)
-                if self.line_pos_wp[pos_in_list] != self.nextstop:
-                    self.ignorestop = False # pass light, reset flag
-                self.nextstop = self.line_pos_wp[pos_in_list]
+                # clear initial state after some distance - starting sim with speed 0
+                if self.distance(self.waypoints.waypoints,self.startwaypoint,closestWPi)>0.05:
+                    self.initialstate = False
 
-            # ------ Car State Machine --------
-            #print 'status:', self.state, self.nextstop, self.trafficlight_status, self.ignorestop, self.initialstate, self.my_current_velocity
+                # next traffic light stop line
+                if (self.line_pos_wp is not None):
+                    pos_in_list = bisect(self.line_pos_wp,closestWPi)
+                    if self.line_pos_wp[pos_in_list] != self.nextstop:
+                        self.ignorestop = False # pass light, reset flag
+                    self.nextstop = self.line_pos_wp[pos_in_list]
 
-            startindex = min(closestWPi,num_wp)
-            #startindex = min(closestWPi+1,num_wp)
-            endindex = min(closestWPi+LOOKAHEAD_WPS,num_wp)
+                # ------ Car State Machine --------
+                #print 'status:', self.state, self.nextstop, self.trafficlight_status, self.ignorestop, self.initialstate, self.my_current_velocity
 
-            wp2pub = []
+                startindex = min(closestWPi,num_wp)
+                #startindex = min(closestWPi+1,num_wp)
+                endindex = min(closestWPi+LOOKAHEAD_WPS,num_wp)
 
-            # =========== STOP ==============
-            if self.state == 'stop':
-                if self.trafficlight_status < 0: # insert traffic light check here
-                    self.state = 'move'
-                    print '========= M O V E ========='
+                wp2pub = []
 
-            # =========== MOVE ==============
-            elif self.state == 'move':
-                if (self.initialstate is False) and (self.ignorestop is False) and (self.distance(self.waypoints.waypoints,startindex,self.nextstop)<self.stop_distance):
-                    self.state = 'brake'
-                    print '-=-=-=-=- B R A K E -=-=-=-=-'
-                else:
-                    for wpi in range(startindex,endindex):
-                        if self.initialstate is False:
-                            self.waypoints.waypoints[wpi].twist.twist.linear.x = self.setspeed
-                        else:
-                            self.waypoints.waypoints[wpi].twist.twist.linear.x = 0.1*self.setspeed
-                        wp2pub.append(self.waypoints.waypoints[wpi])
+                # =========== STOP ==============
+                if self.state == 'stop':
+                    if self.trafficlight_status < 0: # insert traffic light check here
+                        self.state = 'move'
+                        print '========= M O V E ========='
 
-            # =========== BRAKE ==============
-            elif self.state == 'brake':
+                # =========== MOVE ==============
+                elif self.state == 'move':
+                    if (self.initialstate is False) and (self.ignorestop is False) and (self.distance(self.waypoints.waypoints,startindex,self.nextstop)<self.stop_distance):
+                        self.state = 'brake'
+                        print '-=-=-=-=- B R A K E -=-=-=-=-'
+                    else:
+                        for wpi in range(startindex,endindex):
+                            if self.initialstate is False:
+                                self.waypoints.waypoints[wpi].twist.twist.linear.x = self.setspeed
+                            else:
+                                self.waypoints.waypoints[wpi].twist.twist.linear.x = 0.1*self.setspeed
+                            wp2pub.append(self.waypoints.waypoints[wpi])
 
-                # continuebraking = True
-                if self.my_current_velocity<0.0001*self.setspeed:
-                    self.ignorestop = True
-                    self.state = 'stop'
-                    # continuebraking = False
-                    print '------- S T O P ----------'
-                # elif self.trafficlight_status<0: # light turns green
-                #     # enough time to cross the line before ligth turns red?
-                #     distance2line = self.distance(self.waypoints.waypoints,closestWPi,self.nextstop)
-                #     if (distance2line/self.my_current_velocity)<2.0:
-                #         self.ignorestop = True
-                #         self.state = 'move'
-                #         continuebraking = False
-                #         print '>>>>>>>>> Vroom! <<<<<<<<<<'
-                else:
+                # =========== BRAKE ==============
+                elif self.state == 'brake':
+
                     # continuebraking = True
+                    if self.my_current_velocity<0.0001*self.setspeed:
+                        self.ignorestop = True
+                        self.state = 'stop'
+                        # continuebraking = False
+                        print '------- S T O P ----------'
+                    # elif self.trafficlight_status<0: # light turns green
+                    #     # enough time to cross the line before ligth turns red?
+                    #     distance2line = self.distance(self.waypoints.waypoints,closestWPi,self.nextstop)
+                    #     if (distance2line/self.my_current_velocity)<2.0:
+                    #         self.ignorestop = True
+                    #         self.state = 'move'
+                    #         continuebraking = False
+                    #         print '>>>>>>>>> Vroom! <<<<<<<<<<'
+                    else:
+                        # continuebraking = True
 
-                # ---- actual braking operation ----
-                # if continuebraking is True:
-                    for wpi in range(startindex,endindex):
-                        distance2line = self.distance(self.waypoints.waypoints,wpi,self.nextstop-10) # minus t waypoint before line
-                        # speed_for_WP = (distance2line/self.stop_distance)*self.my_current_velocity
-                        if distance2line > 0.4*self.stop_distance: # stage 1
-                            speed_for_WP = 0.8*self.setspeed #self.my_current_velocity
-                            # print closestWPi,self.nextstop,'brake 1',wpi,distance2line,speed_for_WP
-                        elif distance2line > 0.3*self.stop_distance: # stage 2
-                            speed_for_WP = 0.6*self.setspeed #self.my_current_velocity
-                            # print closestWPi,self.nextstop,'brake 2a',wpi,distance2line,'\t\t',speed_for_WP
-                        elif distance2line > 0.2*self.stop_distance: # stage 2
-                            speed_for_WP = 0.4*self.setspeed #self.my_current_velocity
-                            # print closestWPi,self.nextstop,'brake 2b',wpi,distance2line,'\t\t',speed_for_WP
-                        elif distance2line > 0.15*self.stop_distance: # stage 2
-                            speed_for_WP = 0.2*self.setspeed #self.my_current_velocity
-                            # print closestWPi,self.nextstop,'brake 2c',wpi,distance2line,'\t\t',speed_for_WP
-                        else: # linear slope to 0
-                            speed_for_WP = (distance2line/(0.15*self.stop_distance))*0.2*self.setspeed #self.my_current_velocity
-                            # print closestWPi,self.nextstop,'brake 3',wpi,distance2line,'\t\t\t\t',speed_for_WP
+                    # ---- actual braking operation ----
+                    # if continuebraking is True:
+                        for wpi in range(startindex,endindex):
+                            distance2line = self.distance(self.waypoints.waypoints,wpi,self.nextstop-10) # minus t waypoint before line
+                            # speed_for_WP = (distance2line/self.stop_distance)*self.my_current_velocity
+                            if distance2line > 0.4*self.stop_distance: # stage 1
+                                speed_for_WP = 0.8*self.setspeed #self.my_current_velocity
+                                # print closestWPi,self.nextstop,'brake 1',wpi,distance2line,speed_for_WP
+                            elif distance2line > 0.3*self.stop_distance: # stage 2
+                                speed_for_WP = 0.6*self.setspeed #self.my_current_velocity
+                                # print closestWPi,self.nextstop,'brake 2a',wpi,distance2line,'\t\t',speed_for_WP
+                            elif distance2line > 0.2*self.stop_distance: # stage 2
+                                speed_for_WP = 0.4*self.setspeed #self.my_current_velocity
+                                # print closestWPi,self.nextstop,'brake 2b',wpi,distance2line,'\t\t',speed_for_WP
+                            elif distance2line > 0.15*self.stop_distance: # stage 2
+                                speed_for_WP = 0.2*self.setspeed #self.my_current_velocity
+                                # print closestWPi,self.nextstop,'brake 2c',wpi,distance2line,'\t\t',speed_for_WP
+                            else: # linear slope to 0
+                                speed_for_WP = (distance2line/(0.15*self.stop_distance))*0.2*self.setspeed #self.my_current_velocity
+                                # print closestWPi,self.nextstop,'brake 3',wpi,distance2line,'\t\t\t\t',speed_for_WP
 
 
-                        if speed_for_WP > self.setspeed: # in case car failed to stop before light, and treat next light as the target
-                            speed_for_WP = self.setspeed
-                            print 'Ooops'
-                        self.waypoints.waypoints[wpi].twist.twist.linear.x = speed_for_WP
-                        wp2pub.append(self.waypoints.waypoints[wpi])
+                            if speed_for_WP > self.setspeed: # in case car failed to stop before light, and treat next light as the target
+                                speed_for_WP = self.setspeed
+                                print 'Ooops'
+                            self.waypoints.waypoints[wpi].twist.twist.linear.x = speed_for_WP
+                            wp2pub.append(self.waypoints.waypoints[wpi])
 
-            # -----------------------------------------------------
+                # -----------------------------------------------------
 
-            lane = Lane()
-            lane.header.frame_id = '/world'
-            lane.header.stamp = rospy.Time(0)
-            lane.waypoints = wp2pub
+                lane = Lane()
+                lane.header.frame_id = '/world'
+                lane.header.stamp = rospy.Time(0)
+                lane.waypoints = wp2pub
 
-            print 'WP_updater:',closestWPi,self.pose.pose.position.x, self.pose.pose.position.y
-            self.final_waypoints_pub.publish(lane)
+                print 'WP_updater:',closestWPi,self.pose.pose.position.x, self.pose.pose.position.y
+                self.final_waypoints_pub.publish(lane)
+
+            rate.sleep()
 
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints
