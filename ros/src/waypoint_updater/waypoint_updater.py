@@ -193,7 +193,7 @@ class WaypointUpdater(object):
                 lane.header.stamp = rospy.Time(0)
                 lane.waypoints = wp2pub
 
-                print 'WP_updater:',closestWPi,self.pose.pose.position.x, self.pose.pose.position.y
+                # print 'WP_updater:',closestWPi,self.pose.pose.position.x, self.pose.pose.position.y
                 self.final_waypoints_pub.publish(lane)
 
             rate.sleep()
