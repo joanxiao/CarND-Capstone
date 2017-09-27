@@ -185,7 +185,7 @@ class WaypointUpdater(object):
             lane.header.stamp = rospy.Time(0)
             lane.waypoints = wp2pub
 
-            print 'WP_updater:',closestWPi
+            print 'WP_updater:',closestWPi,self.pose.pose.position.x, self.pose.pose.position.y
             self.final_waypoints_pub.publish(lane)
 
     def waypoints_cb(self, waypoints):
@@ -221,8 +221,9 @@ class WaypointUpdater(object):
         best_i = -1
         if (self.pose is not None):
             dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
-            for i in range(len(self.waypoints.waypoints)):
-                this_dist = dl(self.pose.pose.position,self.waypoints.waypoints[i].pose.pose.position)
+            for i,wp in enumerate(self.waypoints.waypoints): # range(len(self.waypoints.waypoints)):
+                # this_dist = dl(self.pose.pose.position,self.waypoints.waypoints[i].pose.pose.position)
+                this_dist = dl(self.pose.pose.position,wp.pose.pose.position)
                 if (this_dist<best_dist):
                     best_dist = this_dist
                     best_i = i

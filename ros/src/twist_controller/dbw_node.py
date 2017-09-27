@@ -113,7 +113,7 @@ class DBWNode(object):
         self.my_twist_command = None
         self.pose = None
         self.waypoints = None
-        self.yaw = 0.0
+        # self.yaw = 0.0
 
         # start loop
         self.loop()
@@ -129,10 +129,10 @@ class DBWNode(object):
 
     def pose_cb(self, msg):
         self.pose = msg
-        self.yaw = self.yaw_from_quaterion()
-        if self.waypoints is not None:
-            currWPi = self.get_closest_waypoint()
-            print 'dbw_node :       ',currWPi, self.pose.pose.position.x, self.pose.pose.position.y
+        # self.yaw = self.yaw_from_quaterion()
+        # if self.waypoints is not None:
+        #     currWPi = self.get_closest_waypoint()
+        #     print 'dbw_node :       ',currWPi, self.pose.pose.position.x, self.pose.pose.position.y
 
     def yaw_from_quaterion(self):
         quaternion = (
@@ -158,6 +158,10 @@ class DBWNode(object):
                 (self.my_current_velocity is not None) and
                 (self.pose is not None) and
                 (self.waypoints is not None)):
+
+                # update yaw from pose
+                # self.yaw = self.yaw_from_quaterion()
+
                 set_linear_velocity = self.my_twist_command.twist.linear.x
                 set_angular_velocity = self.my_twist_command.twist.angular.z
                 if (self.my_current_velocity is not None):
@@ -173,6 +177,7 @@ class DBWNode(object):
                 if (self.my_dbwEnabled==True) or (self.my_dbwEnabled.data==True):
                     # print 'cte', cte, 'throttle', throttle, 'brake', brake, 'steer', steering, 'currspeed', set_curr_velocity, 'setspeed', set_linear_velocity
                     currWPi = self.get_closest_waypoint()
+                    print 'dbw_node :       \t\t\t',currWPi, self.pose.pose.position.x, self.pose.pose.position.y
                     # print currWPi, 'throttle', throttle, 'brake', brake, 'speed', set_curr_velocity, '/', set_linear_velocity
                     dashboard(throttle,brake,set_linear_velocity)
                     self.publish(throttle, brake, steering)
@@ -226,7 +231,7 @@ class DBWNode(object):
             # orient to car's coordinates
             interp_x = []
             interp_y = []
-            angle = self.yaw
+            angle = self.yaw_from_quaterion() #elf.yaw
 
             # lock in values in case pose gets updated while calculating
             ref_x = self.pose.pose.position.x
@@ -268,8 +273,9 @@ class DBWNode(object):
         best_i = -1
         if (self.pose is not None):
             dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
-            for i in range(len(self.waypoints.waypoints)):
-                this_dist = dl(self.pose.pose.position,self.waypoints.waypoints[i].pose.pose.position)
+            for i,wp in enumerate(self.waypoints.waypoints): # range(len(self.waypoints.waypoints)):
+                # this_dist = dl(self.pose.pose.position,self.waypoints.waypoints[i].pose.pose.position)
+                this_dist = dl(self.pose.pose.position,wp.pose.pose.position)
                 if (this_dist<best_dist):
                     best_dist = this_dist
                     best_i = i
