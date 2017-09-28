@@ -12,7 +12,7 @@ class Controller(object):
 
         self.__dict__.update(kwargs)
 
-        kp = -10.0
+        kp = -5.0
         ki = -0.05
         kd = -5.0
         self.spidcontroller = PID(kp, ki, kd, -MAX_BRAKE_Nm, 1.)
