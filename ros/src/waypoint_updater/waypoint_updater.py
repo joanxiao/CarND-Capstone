@@ -105,13 +105,22 @@ class WaypointUpdater(object):
 
                 # next traffic light stop line
                 if (self.line_pos_wp is not None):
+
                     pos_in_list = bisect(self.line_pos_wp,closestWPi)
+
+                    # loop back to beginning
+                    if pos_in_list == len(self.line_pos_wp):
+                        pos_in_list = 0
+
+                    # pass light, reset flag
                     if self.line_pos_wp[pos_in_list] != self.nextstop:
-                        self.ignorestop = False # pass light, reset flag
+                        self.ignorestop = False
+
+                    # set next stop waypoint
                     self.nextstop = self.line_pos_wp[pos_in_list]
 
+
                 startindex = min(closestWPi,num_wp)
-                #startindex = min(closestWPi+1,num_wp)
                 endindex = min(closestWPi+LOOKAHEAD_WPS,num_wp)
 
                 # ----------- Car State Machine -----------------------
