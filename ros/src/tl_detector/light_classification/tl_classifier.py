@@ -129,7 +129,7 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
-        print("At time: {} sec, Start classification.".format(str(time.clock())))
+        #print("At time: {} sec, Start classification.".format(str(time.clock())))
 
         ########################################################
 	cv_image = image
@@ -148,7 +148,7 @@ class TLClassifier(object):
         
         img = cv_image
         # Bounding Box Detection.
-        print("At time: {} sec, Start tf.".format(str(time.clock())))
+        #print("At time: {} sec, Start tf.".format(str(time.clock())))
         with self.detection_graph.as_default():
             with tf.Session(graph=self.detection_graph) as sess:
                 # Expand dimension since the model expcts image to have shape [1, None, None, 3].
@@ -156,11 +156,15 @@ class TLClassifier(object):
                 (boxes, scores, classes, num) = sess.run(
                     [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
                     feed_dict={self.image_tensor: img_expanded})
-        print("At time: {} sec, End tf.".format(str(time.clock())))
+        #print("At time: {} sec, End tf.".format(str(time.clock())))
 
         # Turn detection into pixel values.
         tl_loc = self.traffic_light_location(boxes, scores, classes, img.shape)
-        print(tl_loc[0])
+        #print(tl_loc[0])
+        # No traffic lights found, look in Bernards original location.
+        if len(tl_loc) == 0:
+            tl_loc = [[x-275, y, x+275, y+150]]
+            print("No Lights found by NN!")
         #imgOrig = img
 
         # median blur the image
@@ -207,5 +211,5 @@ class TLClassifier(object):
         #print("Traffic Light color_ID: {}".format(clr_ID))
         
         ########################################################
-        print("At time: {} sec, End classification.".format(str(time.clock())))
+        #print("At time: {} sec, End classification.".format(str(time.clock())))
         return clr_ID
