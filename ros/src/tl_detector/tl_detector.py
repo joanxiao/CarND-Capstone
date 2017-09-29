@@ -35,10 +35,6 @@ img_dir = 'test_img'
 # the lag between simulator and ROS code
 lag_test_mode = False
 
-
-
-
-
 STATE_COUNT_THRESHOLD = 1
 
 class TLDetector(object):
@@ -50,8 +46,6 @@ class TLDetector(object):
         self.line_pos_wp = []
         self.last_pos_ts = 0
         self.has_image = False
-
-
         
         self.pose = None
         self.waypoints = None
