@@ -14,6 +14,31 @@ from scipy.interpolate import CubicSpline
 
 from twist_controller import Controller
 
+def dashboard(throttle,brake,set_speed):
+    '''ASCII art to visualize vehicle metrics'''
+
+    #print "throttle", throttle, "brake", brake, "setspeed", set_speed
+    print('') #spacer
+    
+    num_marks = 30
+
+    # Throttle
+    t_marks = int(throttle*num_marks)
+    print('throttle: ' + '[' + 'o'*t_marks + ' '*(num_marks-t_marks) + ']'
+        +' %.2f'%throttle)
+
+    # Brake
+    max_brake = 1.0 #figure out correct max value
+    b_marks = int(brake/max_brake*num_marks) #change normalizer to some max value
+    print('brake:    ' + '[' + 'x'*b_marks + ' '*(num_marks-b_marks) + ']'
+        +' %.1f N*m'%brake)
+
+    # Speed
+    max_speed = 30.0
+    s_marks = int(set_speed/max_speed*num_marks) # using 32 m/s as max speed
+    print('speed:    ' + '[' + '|'*s_marks + ' '*(num_marks-s_marks) + ']'
+        +' %0.2f m/s'%set_speed)
+
 '''
 You can build this node only after you have built (or partially built) the `waypoint_updater` node.
 
@@ -88,7 +113,7 @@ class DBWNode(object):
         self.my_twist_command = None
         self.pose = None
         self.waypoints = None
-        self.yaw = 0.0
+        # self.yaw = 0.0
 
         # start loop
         self.loop()
@@ -104,7 +129,10 @@ class DBWNode(object):
 
     def pose_cb(self, msg):
         self.pose = msg
-        self.yaw = self.yaw_from_quaterion()
+        # self.yaw = self.yaw_from_quaterion()
+        # if self.waypoints is not None:
+        #     currWPi = self.get_closest_waypoint()
+        #     print 'dbw_node :       ',currWPi, self.pose.pose.position.x, self.pose.pose.position.y
 
     def yaw_from_quaterion(self):
         quaternion = (
@@ -122,13 +150,18 @@ class DBWNode(object):
         self.waypoints = waypoints
 
     def loop(self):
-        rate = rospy.Rate(10) # 50Hz
+        dt = 0.1
+        rate = rospy.Rate(1/dt) # 10Hz or 50Hz
         while not rospy.is_shutdown():
 
             if ((self.my_twist_command is not None) and
                 (self.my_current_velocity is not None) and
                 (self.pose is not None) and
                 (self.waypoints is not None)):
+
+                # update yaw from pose
+                # self.yaw = self.yaw_from_quaterion()
+
                 set_linear_velocity = self.my_twist_command.twist.linear.x
                 set_angular_velocity = self.my_twist_command.twist.angular.z
                 if (self.my_current_velocity is not None):
@@ -138,12 +171,15 @@ class DBWNode(object):
 
                 # cross-track error
                 cte = self.calc_cte()
-                dt = 0.02 #rospy rate
 
                 throttle, brake, steering = self.controller.control( cte, dt, set_linear_velocity, set_angular_velocity, set_curr_velocity)
 
                 if (self.my_dbwEnabled==True) or (self.my_dbwEnabled.data==True):
-                    #print 'cte', cte, 'throttle', throttle, 'brake', brake, 'steer', steering, 'currspeed', set_curr_velocity, 'setspeed', set_linear_velocity
+                    # print 'cte', cte, 'throttle', throttle, 'brake', brake, 'steer', steering, 'currspeed', set_curr_velocity, 'setspeed', set_linear_velocity
+                    # currWPi = self.get_closest_waypoint()
+                    # print 'dbw_node :       \t\t\t',currWPi, self.pose.pose.position.x, self.pose.pose.position.y
+                    # print currWPi, 'throttle', throttle, 'brake', brake, 'speed', set_curr_velocity, '/', set_linear_velocity
+                    # dashboard(throttle,brake,set_linear_velocity)
                     self.publish(throttle, brake, steering)
 
             rate.sleep()
@@ -195,7 +231,7 @@ class DBWNode(object):
             # orient to car's coordinates
             interp_x = []
             interp_y = []
-            angle = self.yaw
+            angle = self.yaw_from_quaterion() #elf.yaw
 
             # lock in values in case pose gets updated while calculating
             ref_x = self.pose.pose.position.x
@@ -237,8 +273,9 @@ class DBWNode(object):
         best_i = -1
         if (self.pose is not None):
             dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
-            for i in range(len(self.waypoints.waypoints)):
-                this_dist = dl(self.pose.pose.position,self.waypoints.waypoints[i].pose.pose.position)
+            for i,wp in enumerate(self.waypoints.waypoints): # range(len(self.waypoints.waypoints)):
+                # this_dist = dl(self.pose.pose.position,self.waypoints.waypoints[i].pose.pose.position)
+                this_dist = dl(self.pose.pose.position,wp.pose.pose.position)
                 if (this_dist<best_dist):
                     best_dist = this_dist
                     best_i = i

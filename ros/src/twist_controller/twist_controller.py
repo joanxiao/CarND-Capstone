@@ -2,6 +2,7 @@
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
 PI = 3.14159265359
+MAX_BRAKE_Nm = 20.0
 
 from yaw_controller import YawController
 from pid import PID
@@ -11,14 +12,14 @@ class Controller(object):
 
         self.__dict__.update(kwargs)
 
-        kp = -0.2
+        kp = -5.0
         ki = -0.05
-        kd = -3.0
-        self.spidcontroller = PID(kp, ki, kd, 0., 1.)
+        kd = -5.0
+        self.spidcontroller = PID(kp, ki, kd, -MAX_BRAKE_Nm, 1.)
 
-        kp = -0.2
+        kp = -1.0 #-0.2
         ki = -0.05
-        kd = -3.0
+        kd = -10.0
         self.max_steer_angle = 0.61 # 35 degrees
         self.pidcontroller = PID(kp, ki, kd, -self.max_steer_angle, self.max_steer_angle)
 
@@ -56,7 +57,5 @@ class Controller(object):
         steer_yaw = self.yawcontroller.get_steering(linear_velocity, angular_velocity, current_velocity)
 
         steer = steer_pid + steer_yaw
-
-        # print 'cte ' + str(cte) + ' -> steer ' + str(steer_pid) + ' + ' + str(steer_yaw) + ' pedal ' + str(self.pedal)
 
         return throttle, brake, steer
