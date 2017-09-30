@@ -19,7 +19,7 @@ def dashboard(throttle,brake,set_speed):
 
     #print "throttle", throttle, "brake", brake, "setspeed", set_speed
     print('') #spacer
-    
+
     num_marks = 30
 
     # Throttle
@@ -108,7 +108,7 @@ class DBWNode(object):
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # other member variables
-        self.my_dbwEnabled = True
+        self.my_dbwEnabled = False
         self.my_current_velocity = None
         self.my_twist_command = None
         self.pose = None
@@ -119,8 +119,8 @@ class DBWNode(object):
         self.loop()
 
     def dbwEnabled_cb(self,dbwEnb):
-        self.my_dbwEnabled = dbwEnb
-
+        self.my_dbwEnabled = dbwEnb.data
+        
     def currvelocity_cb(self,velocity):
         self.my_current_velocity = velocity
 
@@ -157,7 +157,8 @@ class DBWNode(object):
             if ((self.my_twist_command is not None) and
                 (self.my_current_velocity is not None) and
                 (self.pose is not None) and
-                (self.waypoints is not None)):
+                (self.waypoints is not None) and
+                (self.my_dbwEnabled is True)):
 
                 # update yaw from pose
                 # self.yaw = self.yaw_from_quaterion()

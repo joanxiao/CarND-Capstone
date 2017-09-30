@@ -10,6 +10,8 @@ from std_msgs.msg import Int32
 import math
 import yaml
 from bisect import bisect
+
+import time
 '''
 This node will publish waypoints from the car's current position to some `x` distance ahead.
 
@@ -73,6 +75,7 @@ class WaypointUpdater(object):
     def loop(self):
         dt = 0.1
         rate = rospy.Rate(1/dt) # 10Hz or 50Hz
+        green_start_time = -1
         while not rospy.is_shutdown():
 
             if (self.pose is not None) and (self.waypoints is not None): # in case update comes before /base_waypoints
@@ -138,22 +141,27 @@ class WaypointUpdater(object):
                         print '-=-=-=-=- B R A K E -=-=-=-=-', self.nextstop
                 # BRAKE
                 elif self.state == 'brake':
-                    # continuebraking = True
                     if self.my_current_velocity<0.0001*self.setspeed:
                         self.ignorestop = True
                         self.state = 'stop'
-                        # continuebraking = False
                         print '---------  S T O P  ---------', self.nextstop
                     elif self.trafficlight_status<0: # light turns green
+                        if green_start_time < 0:
+                            green_start_time = time.time()
+                            green_elapsed_time = 0
+                        else:
+                            green_elapsed_time = time.time() - green_start_time
                         # enough time to cross the line before ligth turns red?
-                        distance2line = self.distance(self.waypoints.waypoints,closestWPi,self.nextstop)
-                        speedprojected = min(self.my_current_velocity+1.0,self.setspeed)
-                        time_before_red = 2.0
+                        distance2line = self.distance(self.waypoints.waypoints,closestWPi,self.nextstop)-3.0
+                        speedprojected = self.setspeed #min(self.my_current_velocity+1.0,self.setspeed)
+                        time_before_red = 2.0 - green_elapsed_time
+                        # print distance2line, distance2line/speedprojected, time_before_red
                         if (distance2line/speedprojected)<time_before_red:
                             self.ignorestop = True
                             self.state = 'move'
-                            # continuebraking = False
-                            print '>>>>>>>>> Vroom! <<<<<<<<<<'
+                            print '>>>>>>>>>   Vroom!  <<<<<<<<<'
+                    else:
+                        green_start_time = -1
                 # -----------------------------------------------------
 
                 # ---------- Construct waypoints ----------------------
