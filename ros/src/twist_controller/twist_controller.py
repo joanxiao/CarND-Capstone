@@ -19,7 +19,7 @@ class Controller(object):
 
         kp = -1.0 #-0.2
         ki = -0.05
-        kd = -10.0
+        kd = -20.0
         self.max_steer_angle = 0.61 # 35 degrees
         self.pidcontroller = PID(kp, ki, kd, -self.max_steer_angle, self.max_steer_angle)
 
