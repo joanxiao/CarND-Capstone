@@ -152,29 +152,55 @@ class TLDetector(object):
         if self.waypoints is None:
             print('no waypoints, returning None')
             return None
-        else:
-            # If last index is supplied, only search for waypoints
-            # around that region
-            if last_ind: 
-                start_ind = max(last_ind - 200,0)
-                end_ind = min(last_ind + 200,self.num_waypoints)
-                search_wp = self.waypoints.waypoints[start_ind:end_ind]
-            # Else search all waypoints (10,000 of them)
-            else:
-                start_ind = 0
-                search_wp = self.waypoints.waypoints
+
+        # If last index is supplied, only search for waypoints
+        # around that region
+        if last_ind and last_ind < self.num_waypoints and last_ind > 0:
+            start_ind = last_ind - 200
+            end_ind = last_ind + 200
             
-            # Search the (subuset of) waypoints 
-            # for the closest distance to pose
-            closest_dist = 10**6
-            closest_ind = 0
-            for i,waypoint in enumerate(search_wp):
-                way = waypoint.pose.pose.position
-                dist = ((pos.x - way.x)**2 + (pos.y - way.y)**2)**0.50
-                if dist < closest_dist:
-                    closest_ind = i + start_ind
-                    closest_dist = dist
-            return closest_ind
+
+            if start_ind < 0:
+                search_wp = self.waypoints.waypoints[start_ind:]
+                search_wp += self.waypoints.waypoints[:end_ind]
+            elif end_ind > self.num_waypoints:
+                # Adjust for loop-around
+                end_ind = end_ind % self.num_waypoints
+                search_wp = self.waypoints.waypoints[start_ind:]
+                search_wp += self.waypoints.waypoints[:end_ind]
+            else:
+                search_wp = self.waypoints.waypoints[start_ind:end_ind]
+                
+        # Else search all waypoints
+        else:
+            start_ind = 0
+            search_wp = self.waypoints.waypoints
+        
+        # Figure out how to get back to the global waypoint index
+        if start_ind < 0: 
+            shift_ind = start_ind + self.num_waypoints
+        elif start_ind > self.num_waypoints:
+            shift_ind = start_ind - self.num_waypoints
+        else:
+            shift_ind = start_ind
+
+        # Search the (subuset of) waypoints 
+        # for the closest distance to pose
+        closest_dist = 10**6
+        closest_ind = None
+        for i,waypoint in enumerate(search_wp):
+            way = waypoint.pose.pose.position
+            dist = ((pos.x - way.x)**2 + (pos.y - way.y)**2)**0.50
+            if dist < closest_dist:
+                closest_ind = i + shift_ind
+                closest_dist = dist
+
+        if closest_ind >= self.num_waypoints:
+            closest_ind -= self.num_waypoints
+        elif closest_ind < 0:
+            closest_ind += self.num_waypoints
+
+        return closest_ind
 
 
     def project_to_image_plane(self, point_in_world):
@@ -329,9 +355,10 @@ class TLDetector(object):
         # If care position is known, get index of closest waypoint
         if(self.pose):
             car_wp = self.get_closest_waypoint(self.pose.pose,self.last_car_wp)
+            #print('car waypoint: %i'%car_wp)
             self.last_car_wp = car_wp
-            if not car_wp:
-                print('car waypoint could not be found')
+            if car_wp is None:
+                print('car waypoint could not be found:')
                 return -1, TrafficLight.UNKNOWN
         else:
             #print('self.pose is emtpy')
