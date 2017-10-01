@@ -54,7 +54,7 @@ class WaypointUpdater(object):
         self.my_current_velocity = 0
         self.setspeed = (10.0)*(1.60934*1000/3600); # Mph to m/s
         self.trafficlight_status  = -1
-        self.stop_distance = 40 #6*self.setspeed*self.setspeed # roughly - TBD
+        self.stop_distance = 37 #6*self.setspeed*self.setspeed # roughly - TBD
         self.nextstop = -1
         self.ignorestop = False
         self.initialstate = True
@@ -183,7 +183,7 @@ class WaypointUpdater(object):
 
                 # =========== BRAKE ==============
                 elif self.state == 'brake':
-                    brakedistfinal = 1.5
+                    brakedistfinal = 2.0
                     brakedist1 = self.stop_distance-brakedistfinal
                     for wpi in range(startindex,endindex):
                         distance2line = self.distance(self.waypoints.waypoints,wpi,self.nextstop)

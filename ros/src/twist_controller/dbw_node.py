@@ -120,7 +120,7 @@ class DBWNode(object):
 
     def dbwEnabled_cb(self,dbwEnb):
         self.my_dbwEnabled = dbwEnb.data
-        
+
     def currvelocity_cb(self,velocity):
         self.my_current_velocity = velocity
 
@@ -150,7 +150,7 @@ class DBWNode(object):
         self.waypoints = waypoints
 
     def loop(self):
-        dt = 0.1
+        dt = 0.02
         rate = rospy.Rate(1/dt) # 10Hz or 50Hz
         while not rospy.is_shutdown():
 
