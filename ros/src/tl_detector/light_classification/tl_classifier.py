@@ -23,6 +23,7 @@ class TLClassifier(object):
             self.d_scores = self.detection_graph.get_tensor_by_name('detection_scores:0')
             self.d_classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
             self.num_d = self.detection_graph.get_tensor_by_name('num_detections:0')
+        self.sess = tf.Session(graph=self.detection_graph)
         pass
 
 
@@ -130,7 +131,7 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
-        #print("At time: {} sec, Start classification.".format(str(time.clock())))
+        print("At time: {} sec, Start classification.".format(str(time.clock())))
 
         ########################################################
 	cv_image = image
@@ -151,12 +152,11 @@ class TLClassifier(object):
         # Bounding Box Detection.
         #print("At time: {} sec, Start tf.".format(str(time.clock())))
         with self.detection_graph.as_default():
-            with tf.Session(graph=self.detection_graph) as sess:
-                # Expand dimension since the model expcts image to have shape [1, None, None, 3].
-                img_expanded = np.expand_dims(img, axis=0)  
-                (boxes, scores, classes, num) = sess.run(
-                    [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
-                    feed_dict={self.image_tensor: img_expanded})
+            # Expand dimension since the model expcts image to have shape [1, None, None, 3].
+            img_expanded = np.expand_dims(img, axis=0)  
+            (boxes, scores, classes, num) = self.sess.run(
+                [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
+                feed_dict={self.image_tensor: img_expanded})
         #print("At time: {} sec, End tf.".format(str(time.clock())))
 
         # Turn detection into pixel values.
@@ -212,5 +212,5 @@ class TLClassifier(object):
         #print("Traffic Light color_ID: {}".format(clr_ID))
         
         ########################################################
-        #print("At time: {} sec, End classification.".format(str(time.clock())))
+        print("At time: {} sec, End classification.".format(str(time.clock())))
         return clr_ID
