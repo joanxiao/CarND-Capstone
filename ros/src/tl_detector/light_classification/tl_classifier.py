@@ -5,10 +5,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time 
 import tensorflow as tf
+import rospy
+import yaml
 
 class TLClassifier(object):
     def __init__(self):
+
         #TODO load classifier
+
+        # Traffic light confi
+        config_string = rospy.get_param("/traffic_light_config")
+        config = yaml.load(config_string)
+        self.color_mode = config['color_mode']
+        print('Color mode for traffic light classifier is')
+        if self.color_mode == 'sim':
+            print('suitable for simulator')
+        elif self.color_mode == 'carla':
+            print('suitable for Carla')
+        elif self.color_mode == 'real':
+            print('suitable for real life images')
+        else:
+            print('Color mode not recognized')
+
         PATH_TO_MODEL = 'frozen_inference_graph.pb'
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():
@@ -23,6 +41,7 @@ class TLClassifier(object):
             self.d_scores = self.detection_graph.get_tensor_by_name('detection_scores:0')
             self.d_classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
             self.num_d = self.detection_graph.get_tensor_by_name('num_detections:0')
+        self.sess = tf.Session(graph=self.detection_graph)
         pass
 
 
@@ -65,27 +84,77 @@ class TLClassifier(object):
         brightx = np.unravel_index(a.argmax(), a.shape)[1]
         #print("Brightest spot, brightx: {}, birghty: {}".format(brightx, brighty)) 
 
+        if (self.color_mode == 'sim' or self.color_mode == 'real'):
+            ###################green color detection##########
+            # define range of green color in HSV
+            lwr_green = np.array([60,125,125]) #100,100])
+            upr_green = np.array([120,255,255])
+
+            ##################red color detection#################
+            # define range of red color in HSV
+            lwr_red = np.array([170,125,125]) 
+            upr_red = np.array([179,255,255])
+
+
+            ###############yellow traffic light detection###########
+            # define range of orange color in HSV
+            lwr_yellow = np.array([5,150,150]) 
+            upr_yellow = np.array([40,255,255])
+
+        elif self.color_mode == 'carla':
+            ###################green color detection##########
+            # define range of green color in HSV
+            lwr_green = np.array([60,125,125])
+            upr_green = np.array([120,255,255])
+
+            ##################red color detection#################
+            # define range of amber color in HSV
+            lwr_red = np.array([5,125,125]) 
+            upr_red = np.array([6,255,255])
+
+
+            ###############yellow traffic light detection###########
+            # define range of orange color in HSV
+            lwr_yellow = np.array([30,150,150]) 
+            upr_yellow = np.array([40,255,255])
+        
+        else:
+            ###################green color detection##########
+            # define range of green color in HSV
+            lwr_green = np.array([60,125,125]) #100,100])
+            upr_green = np.array([120,255,255])
+
+            ##################red color detection#################
+            # define range of red color in HSV
+            lwr_red = np.array([170,125,125]) 
+            upr_red = np.array([179,255,255])
+
+            ###############yellow traffic light detection###########
+            # define range of orange color in HSV
+            lwr_yellow = np.array([5,150,150]) 
+            upr_yellow = np.array([40,255,255])
 
 	#color hsv range boolean
-        greenColor = np.all(lower_HSV == np.array([60, 125, 125])) and np.all(upper_HSV == np.array([120,255,255]))
-        redColor = np.all(lower_HSV == np.array([170, 125, 125])) and np.all(upper_HSV == np.array([179,255,255]))
-        yellowColor = np.all(lower_HSV == np.array([5, 150, 150])) and np.all(upper_HSV == np.array([40,255,255]))
+        greenColor = np.all(lower_HSV == lwr_green) and np.all(upper_HSV == upr_green)
+        redColor = np.all(lower_HSV == lwr_red) and np.all(upper_HSV == upr_red)
+        yellowColor = np.all(lower_HSV == lwr_yellow) and np.all(upper_HSV == upr_yellow)
 
         if (((brightx == 0) and (brighty == 0)) == False):
             if (greenColor == True):
-		print("*******************Green Traffic Light**************")
+		print("********* G R E E N *********")
                 #cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
                 #cv2.putText(img, "green traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
                 colorID = TrafficLight.GREEN
                 #print("At time: {} sec, colorID: TrafficLight.GREEN or color ID index: {}".format(str(time.clock()), TrafficLight.GREEN))
             elif (redColor == True):
-		print("*******************Red Traffic Light**************")
+                
+		print("*********   R E D   *********")
                 #cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
                 #cv2.putText(img, "red traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
                 colorID = TrafficLight.RED
                 #print("At time: {} sec, colorID: TrafficLight.RED or color ID index: {}".format(str(time.clock()), TrafficLight.RED))
             elif (yellowColor == True):
-		print("*******************Yellow Traffic Light**************")
+		print("******** Y E L L O W ********")
                 #cv2.rectangle(img, (brightx -15, brighty - 15), (brightx + 15, brighty + 15), (255,0,0),2)
                 #cv2.putText(img, "yellow traffic light", (brightx-15, brighty -27), 0, 1.2, (255,0,0),2)
               
@@ -129,7 +198,8 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
-        #print("At time: {} sec, Start classification.".format(str(time.clock())))
+        #print("At time: {} sec, Start classification.".format(str(rospy.get_time())))
+        start_time = rospy.get_time()
 
         ########################################################
 	cv_image = image
@@ -150,12 +220,11 @@ class TLClassifier(object):
         # Bounding Box Detection.
         #print("At time: {} sec, Start tf.".format(str(time.clock())))
         with self.detection_graph.as_default():
-            with tf.Session(graph=self.detection_graph) as sess:
-                # Expand dimension since the model expcts image to have shape [1, None, None, 3].
-                img_expanded = np.expand_dims(img, axis=0)  
-                (boxes, scores, classes, num) = sess.run(
-                    [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
-                    feed_dict={self.image_tensor: img_expanded})
+            # Expand dimension since the model expcts image to have shape [1, None, None, 3].
+            img_expanded = np.expand_dims(img, axis=0)  
+            (boxes, scores, classes, num) = self.sess.run(
+                [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
+                feed_dict={self.image_tensor: img_expanded})
         #print("At time: {} sec, End tf.".format(str(time.clock())))
 
         # Turn detection into pixel values.
@@ -172,26 +241,62 @@ class TLClassifier(object):
         # Convert image to HSV
         hsvImg = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        ###################green color detection##########
-        # define range of green color in HSV
-        lower_green = np.array([60,125,125]) #100,100])
-        upper_green = np.array([120,255,255])
+        if (self.color_mode == 'sim' or self.color_mode == 'real'):
+            ###################green color detection##########
+            # define range of green color in HSV
+            lower_green = np.array([60,125,125]) #100,100])
+            upper_green = np.array([120,255,255])
+
+            ##################red color detection#################
+            # define range of red color in HSV
+            lower_red = np.array([170,125,125]) 
+            upper_red = np.array([179,255,255])
+
+
+            ###############yellow traffic light detection###########
+            # define range of orange color in HSV
+            lower_yellow = np.array([5,150,150]) 
+            upper_yellow = np.array([40,255,255])
+
+        elif self.color_mode == 'carla':
+            ###################green color detection##########
+            # define range of green color in HSV
+            lower_green = np.array([60,125,125])
+            upper_green = np.array([120,255,255])
+
+            ##################red color detection#################
+            # define range of amber color in HSV
+            lower_red = np.array([5,125,125]) 
+            upper_red = np.array([6,255,255])
+
+
+            ###############yellow traffic light detection###########
+            # define range of orange color in HSV
+            lower_yellow = np.array([30,150,150]) 
+            upper_yellow = np.array([40,255,255])
+        
+        else:
+            ###################green color detection##########
+            # define range of green color in HSV
+            lower_green = np.array([60,125,125]) #100,100])
+            upper_green = np.array([120,255,255])
+
+            ##################red color detection#################
+            # define range of red color in HSV
+            lower_red = np.array([170,125,125]) 
+            upper_red = np.array([179,255,255])
+
+            ###############yellow traffic light detection###########
+            # define range of orange color in HSV
+            lower_yellow = np.array([5,150,150]) 
+            upper_yellow = np.array([40,255,255])
+
         clr_ID = self.get_light_color(img, tl_loc[0], lower_green, upper_green)
         if (clr_ID == TrafficLight.GREEN):
             greenLight = True
-        ##################red color detection#################
-        # define range of red color in HSV
-        lower_red = np.array([170,125,125]) 
-        upper_red = np.array([179,255,255])
         clr_ID = self.get_light_color(img, tl_loc[0], lower_red, upper_red)
         if (clr_ID == TrafficLight.RED):
            redLight = True
-
-
-        ###############yellow traffic light detection###########
-        # define range of orange color in HSV
-        lower_yellow = np.array([5,150,150]) 
-        upper_yellow = np.array([40,255,255]) #real amber traffic light works 15,255,255])
         clr_ID = self.get_light_color(img, tl_loc[0], lower_yellow, upper_yellow)
         if (clr_ID == TrafficLight.YELLOW):
             yellowLight = True
@@ -208,8 +313,10 @@ class TLClassifier(object):
 	else:
             clr_ID = TrafficLight.UNKNOWN
         
-        #print("Traffic Light color_ID: {}".format(clr_ID))
+        #print("Traffic Light color_ID: {}"
         
         ########################################################
-        #print("At time: {} sec, End classification.".format(str(time.clock())))
+        #print("At time: {} sec, End classification.".format(str(rospy.get_time())))
+        delta_time = 1000*(rospy.get_time() - start_time)
+        print("Classification time (ms) %i"%delta_time)
         return clr_ID
