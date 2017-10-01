@@ -6,10 +6,27 @@ import matplotlib.pyplot as plt
 import time 
 import tensorflow as tf
 import rospy
+import yaml
 
 class TLClassifier(object):
     def __init__(self):
         #TODO load classifier
+
+
+        # Traffic light confi
+        config_string = rospy.get_param("/traffic_light_config")
+        config = yaml.load(config_string)
+        self.color_mode = config['color_mode']
+        print('Color mode for traffic light classifier is')
+        if self.color_mode == 'sim':
+            print('suitable for simulator')
+        elif self.color_mode == 'carla':
+            print('suitable for Carla')
+        elif self.color_mode == 'real':
+            print('suitable for real life images')
+        else:
+            print('Color mode not recognized')
+
         PATH_TO_MODEL = 'frozen_inference_graph.pb'
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():
