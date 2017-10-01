@@ -132,7 +132,8 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
-        print("At time: {} sec, Start classification.".format(str(rospy.get_time())))
+        #print("At time: {} sec, Start classification.".format(str(rospy.get_time())))
+        start_time = rospy.get_time()
 
         ########################################################
 	cv_image = image
@@ -213,5 +214,7 @@ class TLClassifier(object):
         #print("Traffic Light color_ID: {}"
         
         ########################################################
-        print("At time: {} sec, End classification.".format(str(rospy.get_time())))
+        #print("At time: {} sec, End classification.".format(str(rospy.get_time())))
+        delta_time = 1000*(rospy.get_time() - start_time)
+        print("Classification time (ms) %i"%delta_time)
         return clr_ID

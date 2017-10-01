@@ -330,7 +330,7 @@ class TLDetector(object):
                 print('car waypoint could not be found')
                 return -1, TrafficLight.UNKNOWN
         else:
-            print('self.pose is emtpy')
+            #print('self.pose is emtpy')
             return -1, TrafficLight.UNKNOWN
 
         #TODO find the closest visible traffic light (if one exists)
