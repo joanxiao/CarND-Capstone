@@ -45,6 +45,9 @@ class Controller(object):
         else:
             throttle = 0.0
             brake = -pedal
+            # Keep car stopped since car will naturally creep forward.
+            if current_velocity < 0.2:
+                brake = 0.1
 
         # Steer
         if (current_velocity==0.0):
