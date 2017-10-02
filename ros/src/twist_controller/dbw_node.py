@@ -76,6 +76,8 @@ class DBWNode(object):
         steer_ratio = rospy.get_param('~steer_ratio', 14.8)
         max_lat_accel = rospy.get_param('~max_lat_accel', 3.)
         max_steer_angle = rospy.get_param('~max_steer_angle', 8.)
+        max_throttle = rospy.get_param('~max_throttle',1.)
+        max_brake = rospy.get_param('~max_brake',1.)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -95,7 +97,9 @@ class DBWNode(object):
             'wheel_base': wheel_base,
             'steer_ratio': steer_ratio,
             'max_lat_accel': max_lat_accel,
-            'max_steer_angle': max_steer_angle
+            'max_steer_angle': max_steer_angle,
+            'max_throttle': max_throttle,
+            'max_brake': max_brake
         }
 
         self.controller = Controller(**args)
@@ -120,7 +124,7 @@ class DBWNode(object):
 
     def dbwEnabled_cb(self,dbwEnb):
         self.my_dbwEnabled = dbwEnb.data
-        
+
     def currvelocity_cb(self,velocity):
         self.my_current_velocity = velocity
 
@@ -150,7 +154,7 @@ class DBWNode(object):
         self.waypoints = waypoints
 
     def loop(self):
-        dt = 0.1
+        dt = 0.02
         rate = rospy.Rate(1/dt) # 10Hz or 50Hz
         while not rospy.is_shutdown():
 
@@ -175,7 +179,7 @@ class DBWNode(object):
 
                 throttle, brake, steering = self.controller.control( cte, dt, set_linear_velocity, set_angular_velocity, set_curr_velocity)
 
-                if (self.my_dbwEnabled==True) or (self.my_dbwEnabled.data==True):
+                if (self.my_dbwEnabled==True): # or (self.my_dbwEnabled.data==True):
                     # print 'cte', cte, 'throttle', throttle, 'brake', brake, 'steer', steering, 'currspeed', set_curr_velocity, 'setspeed', set_linear_velocity
                     # currWPi = self.get_closest_waypoint()
                     # print 'dbw_node :       \t\t\t',currWPi, self.pose.pose.position.x, self.pose.pose.position.y

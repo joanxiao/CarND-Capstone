@@ -13,6 +13,7 @@ class TLClassifier(object):
 
         #TODO load classifier
 
+
         # Traffic light confi
         config_string = rospy.get_param("/traffic_light_config")
         config = yaml.load(config_string)

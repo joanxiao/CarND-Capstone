@@ -45,6 +45,9 @@ class WaypointUpdater(object):
         config_string = rospy.get_param("/traffic_light_config")
         self.config = yaml.load(config_string)
 
+        green_light_time = rospy.get_param('~green_light_time', 2.)
+        stop_distance = rospy.get_param('~stop_distance', 35.)
+        stop_buffer = rospy.get_param('~stop_buffer', 0.0)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
@@ -54,7 +57,11 @@ class WaypointUpdater(object):
         self.my_current_velocity = 0
         self.setspeed = (10.0)*(1.60934*1000/3600); # Mph to m/s
         self.trafficlight_status  = -1
-        self.stop_distance = 40 #6*self.setspeed*self.setspeed # roughly - TBD
+        self.green_light_time = green_light_time
+        self.stop_distance = stop_distance
+        self.stop_buffer = stop_buffer
+        print 'green light time',self.green_light_time, 'stop distance',self.stop_distance,'stop buffer',self.stop_buffer
+        # self.stop_distance = 37 #6*self.setspeed*self.setspeed # roughly - TBD
         self.nextstop = -1
         self.ignorestop = False
         self.initialstate = True
@@ -152,9 +159,9 @@ class WaypointUpdater(object):
                         else:
                             green_elapsed_time = time.time() - green_start_time
                         # enough time to cross the line before ligth turns red?
-                        distance2line = self.distance(self.waypoints.waypoints,closestWPi,self.nextstop)-3.0
+                        distance2line = self.distance(self.waypoints.waypoints,closestWPi,self.nextstop)+self.stop_buffer
                         speedprojected = self.setspeed #min(self.my_current_velocity+1.0,self.setspeed)
-                        time_before_red = 2.0 - green_elapsed_time
+                        time_before_red = self.green_light_time - green_elapsed_time
                         # print distance2line, distance2line/speedprojected, time_before_red
                         if (distance2line/speedprojected)<time_before_red:
                             self.ignorestop = True
@@ -183,7 +190,7 @@ class WaypointUpdater(object):
 
                 # =========== BRAKE ==============
                 elif self.state == 'brake':
-                    brakedistfinal = 1.5
+                    brakedistfinal = 2.0
                     brakedist1 = self.stop_distance-brakedistfinal
                     for wpi in range(startindex,endindex):
                         distance2line = self.distance(self.waypoints.waypoints,wpi,self.nextstop)
