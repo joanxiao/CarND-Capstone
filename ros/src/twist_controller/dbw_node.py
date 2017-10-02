@@ -76,12 +76,14 @@ class DBWNode(object):
         steer_ratio = rospy.get_param('~steer_ratio', 14.8)
         max_lat_accel = rospy.get_param('~max_lat_accel', 3.)
         max_steer_angle = rospy.get_param('~max_steer_angle', 8.)
+        max_throttle = rospy.get_param('~max_throttle',1.)
+        max_brake = rospy.get_param('~max_brake',1.)
 
-        self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
+        self.steer_pub = rospy.Publisher('/vehicle/steering_cmd_test',
                                          SteeringCmd, queue_size=1)
-        self.throttle_pub = rospy.Publisher('/vehicle/throttle_cmd',
+        self.throttle_pub = rospy.Publisher('/vehicle/throttle_cmd_test',
                                             ThrottleCmd, queue_size=1)
-        self.brake_pub = rospy.Publisher('/vehicle/brake_cmd',
+        self.brake_pub = rospy.Publisher('/vehicle/brake_cmd_test',
                                          BrakeCmd, queue_size=1)
 
         # TODO: Create `TwistController` object
@@ -95,7 +97,9 @@ class DBWNode(object):
             'wheel_base': wheel_base,
             'steer_ratio': steer_ratio,
             'max_lat_accel': max_lat_accel,
-            'max_steer_angle': max_steer_angle
+            'max_steer_angle': max_steer_angle,
+            'max_throttle': max_throttle,
+            'max_brake': max_brake
         }
 
         self.controller = Controller(**args)
@@ -157,8 +161,8 @@ class DBWNode(object):
             if ((self.my_twist_command is not None) and
                 (self.my_current_velocity is not None) and
                 (self.pose is not None) and
-                (self.waypoints is not None) and
-                (self.my_dbwEnabled is True)):
+                (self.waypoints is not None)): # and
+                # (self.my_dbwEnabled is True)):
 
                 # update yaw from pose
                 # self.yaw = self.yaw_from_quaterion()

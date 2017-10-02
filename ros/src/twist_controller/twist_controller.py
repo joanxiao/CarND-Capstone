@@ -11,16 +11,16 @@ class Controller(object):
     def __init__(self, *args, **kwargs):
 
         self.__dict__.update(kwargs)
+        # print 'Controller: max_steer',self.max_steer_angle,'max_throttle',self.max_throttle,'max_brake',self.max_brake
 
         kp = -5.0
         ki = -0.05
         kd = -5.0
-        self.spidcontroller = PID(kp, ki, kd, -MAX_BRAKE_Nm, 1.)
+        self.spidcontroller = PID(kp, ki, kd, -self.max_brake, self.max_throttle)
 
         kp = -1.0 #-0.2
         ki = -0.05
         kd = -20.0
-        self.max_steer_angle = 0.61 # 35 degrees
         self.pidcontroller = PID(kp, ki, kd, -self.max_steer_angle, self.max_steer_angle)
 
         min_speed = 0.0
