@@ -43,7 +43,6 @@ class TLClassifier(object):
             self.d_classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
             self.num_d = self.detection_graph.get_tensor_by_name('num_detections:0')
         self.sess = tf.Session(graph=self.detection_graph)
-        pass
 
 
     ###############################################
