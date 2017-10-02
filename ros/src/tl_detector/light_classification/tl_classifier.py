@@ -5,10 +5,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time 
 import tensorflow as tf
+import rospy
+import yaml
 
 class TLClassifier(object):
     def __init__(self):
         #TODO load classifier
+
+
+        # Traffic light confi
+        config_string = rospy.get_param("/traffic_light_config")
+        config = yaml.load(config_string)
+        self.color_mode = config['color_mode']
+        print('Color mode for traffic light classifier is')
+        if self.color_mode == 'sim':
+            print('suitable for simulator')
+        elif self.color_mode == 'carla':
+            print('suitable for Carla')
+        elif self.color_mode == 'real':
+            print('suitable for real life images')
+        else:
+            print('Color mode not recognized')
+
         PATH_TO_MODEL = 'frozen_inference_graph.pb'
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():
@@ -23,6 +41,7 @@ class TLClassifier(object):
             self.d_scores = self.detection_graph.get_tensor_by_name('detection_scores:0')
             self.d_classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
             self.num_d = self.detection_graph.get_tensor_by_name('num_detections:0')
+        self.sess = tf.Session(graph=self.detection_graph)
         pass
 
 
@@ -130,7 +149,8 @@ class TLClassifier(object):
 
         """
         #TODO implement light color prediction
-        #print("At time: {} sec, Start classification.".format(str(time.clock())))
+        #print("At time: {} sec, Start classification.".format(str(rospy.get_time())))
+        start_time = rospy.get_time()
 
         ########################################################
 	cv_image = image
@@ -151,12 +171,11 @@ class TLClassifier(object):
         # Bounding Box Detection.
         #print("At time: {} sec, Start tf.".format(str(time.clock())))
         with self.detection_graph.as_default():
-            with tf.Session(graph=self.detection_graph) as sess:
-                # Expand dimension since the model expcts image to have shape [1, None, None, 3].
-                img_expanded = np.expand_dims(img, axis=0)  
-                (boxes, scores, classes, num) = sess.run(
-                    [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
-                    feed_dict={self.image_tensor: img_expanded})
+            # Expand dimension since the model expcts image to have shape [1, None, None, 3].
+            img_expanded = np.expand_dims(img, axis=0)  
+            (boxes, scores, classes, num) = self.sess.run(
+                [self.d_boxes, self.d_scores, self.d_classes, self.num_d],
+                feed_dict={self.image_tensor: img_expanded})
         #print("At time: {} sec, End tf.".format(str(time.clock())))
 
         # Turn detection into pixel values.
@@ -209,8 +228,10 @@ class TLClassifier(object):
 	else:
             clr_ID = TrafficLight.UNKNOWN
         
-        #print("Traffic Light color_ID: {}".format(clr_ID))
+        #print("Traffic Light color_ID: {}"
         
         ########################################################
-        #print("At time: {} sec, End classification.".format(str(time.clock())))
+        #print("At time: {} sec, End classification.".format(str(rospy.get_time())))
+        delta_time = 1000*(rospy.get_time() - start_time)
+        print("Classification time (ms) %i"%delta_time)
         return clr_ID
