@@ -102,21 +102,52 @@ class TLClassifier(object):
             upr_yellow = np.array([40,255,255])
 
         elif self.color_mode == 'carla':
-            ###################green color detection##########
-            # define range of green color in HSV
-            lwr_green = np.array([60,125,125])
-            upr_green = np.array([120,255,255])
+            ans = cv2.bitwise_and(res,res,mask=polygon_img[:,:,2])
 
-            ##################red color detection#################
-            # define range of amber color in HSV
-            lwr_red = np.array([5,125,125]) 
-            upr_red = np.array([6,255,255])
+            most_chain = 0
+            index_y = 0
+            for x in range(left_x, right_x):
+                new_chain = 0
+                for y in range(top_y, bot_y):
+                    if ans[y,x,2] != 0:
+                        new_chain += 1
+                        if new_chain > most_chain:
+                            most_chain = new_chain
+                            index_y = y
+                    else:
+                        new_chain = 0
 
-
-            ###############yellow traffic light detection###########
-            # define range of orange color in HSV
-            lwr_yellow = np.array([30,150,150]) 
-            upr_yellow = np.array([40,255,255])
+            total = 0
+            count = 0
+            most_count = 0
+            index = 0             
+            for y in range(index_y-most_chain, index_y):
+                new_count = 0
+                for x in range(left_x, right_x):
+                    if ans[y,x,2] != 0:
+                        new_count += 1
+                        total += y
+                        count += 1
+                if new_count > most_count:
+                    index = y
+                    most_count = new_count
+            if count > 0:
+                avg_index = total / count
+            else:
+                return TrafficLight.UNKNOWN
+            
+                    
+            if avg_index < ((bot_y-top_y)*0.40+top_y):
+                print("*********   R E D   *********")
+                return TrafficLight.RED
+            elif avg_index < ((bot_y-top_y)*0.60+top_y):
+                print("******** Y E L L O W ********")
+                return TrafficLight.YELLOW
+            elif avg_index < bot_y:
+                print("********* G R E E N *********")
+                return TrafficLight.GREEN
+            else:
+                return TrafficLight.UNKNOWN
         
         else:
             ###################green color detection##########
@@ -234,6 +265,8 @@ class TLClassifier(object):
         if len(tl_loc) == 0:
             tl_loc = [[x-275, y, x+275, y+150]]
             print("No Lights found by NN!")
+            if self.color_mode == 'carla':
+                return TrafficLight.UNKNOWN
         #imgOrig = img
 
         # median blur the image
@@ -259,21 +292,7 @@ class TLClassifier(object):
             upper_yellow = np.array([40,255,255])
 
         elif self.color_mode == 'carla':
-            ###################green color detection##########
-            # define range of green color in HSV
-            lower_green = np.array([60,125,125])
-            upper_green = np.array([120,255,255])
-
-            ##################red color detection#################
-            # define range of amber color in HSV
-            lower_red = np.array([5,125,125]) 
-            upper_red = np.array([6,255,255])
-
-
-            ###############yellow traffic light detection###########
-            # define range of orange color in HSV
-            lower_yellow = np.array([30,150,150]) 
-            upper_yellow = np.array([40,255,255])
+            return self.get_light_color(img, tl_loc[0], np.array([1,1,250]), np.array([255,255,255]))
         
         else:
             ###################green color detection##########
@@ -318,5 +337,5 @@ class TLClassifier(object):
         ########################################################
         #print("At time: {} sec, End classification.".format(str(rospy.get_time())))
         delta_time = 1000*(rospy.get_time() - start_time)
-        print("Classification time (ms) %i"%delta_time)
+        #print("Classification time (ms) %i"%delta_time)
         return clr_ID

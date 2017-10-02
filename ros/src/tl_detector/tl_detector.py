@@ -95,8 +95,8 @@ class TLDetector(object):
         if waypoints:
             self.waypoints = waypoints
             self.num_waypoints = len(waypoints.waypoints)
-            print('Updating with %i waypoints'%self.num_waypoints)
-            print('Expect about 10,000 waypoints for simulator')
+            #print('Updating with %i waypoints'%self.num_waypoints)
+            #print('Expect about 10,000 waypoints for simulator')
         
 
     def traffic_cb(self, msg):
@@ -306,8 +306,8 @@ class TLDetector(object):
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
         # u,v are the x,y in the image plane
-        u,v  = self.project_to_image_plane(light.pose.pose.position)
-
+        #u,v  = self.project_to_image_plane(light.pose.pose.position)
+        u = v = 0
         #TODO use light location to zoom in on traffic light in image
 
         # Image capture
