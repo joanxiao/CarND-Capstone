@@ -153,7 +153,7 @@ class TLDetector(object):
                 self.state = state
             elif self.state_count >= STATE_COUNT_THRESHOLD:
                 self.last_state = self.state
-                light_wp = light_wp if state == TrafficLight.RED else -1
+                light_wp = light_wp if (state == TrafficLight.UNKNOWN or state == TrafficLight.RED) else -1
                 self.last_wp = light_wp
                 self.upcoming_red_light_pub.publish(Int32(light_wp))
             else:
@@ -332,8 +332,8 @@ class TLDetector(object):
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
         # u,v are the x,y in the image plane
-        u,v  = self.project_to_image_plane(light.pose.pose.position)
-
+        #u,v  = self.project_to_image_plane(light.pose.pose.position)
+        u = v = 0
         #TODO use light location to zoom in on traffic light in image
 
         # Image capture
@@ -415,11 +415,9 @@ class TLDetector(object):
     
         '''
         # New WIP implementation.
-
         # Number of waypoints beind a line below which the light
         # is visible. Tuned empirically
         visible_num_wp = 150
-
         # Get the furthest visible waypoint, called "horizon waypoint"
         horizon_wp = car_wp + visible_num_wp
         line = None
