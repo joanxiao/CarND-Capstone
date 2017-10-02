@@ -23,6 +23,9 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import os
+from functools import partial
+
 
 # Set to true to save images from camera to png files
 # Used to zoom test mapping of 3D world coordinates to 
@@ -52,6 +55,29 @@ class TLDetector(object):
         self.waypoints = None
         self.camera_image = None
         self.lights = []
+
+        # Combine model files. Code by John Chen (github.com/diyjac).
+        # Used since model is larger than 100 MB.
+        directory = 'frozen_model_chunks'
+        filename = 'frozen_inference_graph.pb'
+        chunksize=1024
+
+        if not os.path.exists('frozen_inference_graph.pb'):
+            print "Restoring model:", filename, "from directory:", directory
+            if os.path.exists(directory):
+                if os.path.exists(filename):
+                    os.remove(filename)
+                output = open(filename, 'wb')
+                chunks = os.listdir(directory)
+                chunks.sort()
+                print chunks
+                for fname in chunks:
+                    fpath = os.path.join(directory, fname)
+                    with open(fpath, 'rb') as fileobj:
+                        for chunk in iter(partial(fileobj.read, chunksize), ''):
+                            output.write(chunk)
+            output.close()
+            print "Model restored."
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -95,8 +121,8 @@ class TLDetector(object):
         if waypoints:
             self.waypoints = waypoints
             self.num_waypoints = len(waypoints.waypoints)
-            print('Updating with %i waypoints'%self.num_waypoints)
-            print('Expect about 10,000 waypoints for simulator')
+            #print('Updating with %i waypoints'%self.num_waypoints)
+            #print('Expect about 10,000 waypoints for simulator')
         
 
     def traffic_cb(self, msg):
