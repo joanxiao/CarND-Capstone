@@ -161,8 +161,8 @@ class DBWNode(object):
             if ((self.my_twist_command is not None) and
                 (self.my_current_velocity is not None) and
                 (self.pose is not None) and
-                (self.waypoints is not None)): # and
-                # (self.my_dbwEnabled is True)):
+                (self.waypoints is not None) and
+                (self.my_dbwEnabled is True)):
 
                 # update yaw from pose
                 # self.yaw = self.yaw_from_quaterion()
@@ -179,7 +179,7 @@ class DBWNode(object):
 
                 throttle, brake, steering = self.controller.control( cte, dt, set_linear_velocity, set_angular_velocity, set_curr_velocity)
 
-                if (self.my_dbwEnabled==True) or (self.my_dbwEnabled.data==True):
+                if (self.my_dbwEnabled==True): # or (self.my_dbwEnabled.data==True):
                     # print 'cte', cte, 'throttle', throttle, 'brake', brake, 'steer', steering, 'currspeed', set_curr_velocity, 'setspeed', set_linear_velocity
                     # currWPi = self.get_closest_waypoint()
                     # print 'dbw_node :       \t\t\t',currWPi, self.pose.pose.position.x, self.pose.pose.position.y
