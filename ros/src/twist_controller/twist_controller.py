@@ -2,7 +2,6 @@
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
 PI = 3.14159265359
-MAX_BRAKE_Nm = 20.0
 
 from yaw_controller import YawController
 from pid import PID
@@ -26,7 +25,7 @@ class Controller(object):
         min_speed = 0.0
         self.yawcontroller = YawController(self.wheel_base, self.steer_ratio, min_speed, self.max_lat_accel, self.max_steer_angle)
 
-        self.pedal = 1.0
+        self.pedal = self.max_throttle
 
     def control(self, *args): #, **kwargs):
 
@@ -38,10 +37,7 @@ class Controller(object):
         current_velocity = args[4]
 
         # Throttle - PID control
-        if (current_velocity==0.0):
-            pedal = 1.0
-        else:
-            pedal = self.spidcontroller.step(current_velocity-linear_velocity, delta_time)
+        pedal = self.spidcontroller.step(current_velocity-linear_velocity, delta_time)
 
         if (pedal>0):
             throttle = pedal
@@ -49,13 +45,21 @@ class Controller(object):
         else:
             throttle = 0.0
             brake = -pedal
+            # Keep car stopped since car will naturally creep forward.
+            if current_velocity < 0.2:
+                brake = 0.1
 
-        # Steer - PID control
-        steer_pid = self.pidcontroller.step(cte, delta_time)
+        # Steer
+        if (current_velocity==0.0):
+            steer = 0.0
 
-        # Steer - YAW control
-        steer_yaw = self.yawcontroller.get_steering(linear_velocity, angular_velocity, current_velocity)
+        else:
+            # Steer - PID control
+            steer_pid = self.pidcontroller.step(cte, delta_time)
 
-        steer = steer_pid + steer_yaw
+            # Steer - YAW control
+            steer_yaw = self.yawcontroller.get_steering(linear_velocity, angular_velocity, current_velocity)
+
+            steer = steer_pid + steer_yaw
 
         return throttle, brake, steer

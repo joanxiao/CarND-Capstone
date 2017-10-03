@@ -13,5 +13,6 @@
         <param name="max_steer_angle" value=".61" />
         <param name="max_throttle" value="1." />
         <param name="max_brake" value="20." />
+        <param name="brake_torque" value="1" />
     </node>
 </launch>
