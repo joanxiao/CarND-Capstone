@@ -67,6 +67,7 @@ class WaypointUpdater(object):
         self.initialstate = True
         self.startwaypoint = -1
         self.state = 'move'
+        self.detection_ready = False
 
         # start loop
         self.loop()
@@ -138,7 +139,7 @@ class WaypointUpdater(object):
 
                 # STOP
                 if self.state == 'stop':
-                    if self.trafficlight_status < 0: # insert traffic light check here
+                    if self.trafficlight_status < 0 and self.detection_ready == True: # insert traffic light check here
                         self.state = 'move'
                         print '=========  M O V E  =========', self.nextstop
                 # MOVE
@@ -235,6 +236,7 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
+        self.detection_ready = True
         self.trafficlight_status = msg.data
 
     def obstacle_cb(self, msg):
